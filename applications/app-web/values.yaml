@@ -1,0 +1,84 @@
+fullnameOverride: app-web
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/app/web
+  tag: 23.11.2.3
+initContainers:
+  - image: gitlab.eukles.com:7344/eukles/ged/app/migration
+    tag: 23.11.2.3
+    name: migration
+    extraEnvVarsSecret: env-all
+    persistenceEnabled: true
+  - image: gitlab.eukles.com:7344/eukles/ged/app/web
+    name: migration-es
+    tag: 23.11.2.3
+    extraEnvVarsSecret: env-all
+    env:
+      - name: APPLICATION_USER
+        value: application
+      - name: CLI_SCRIPT
+        value: bash -c
+    command:
+      - bash
+      - -c
+      - |
+        vendor/bin/propel config:convert && bin/console es:init --no-interaction || bin/console es:sync --no-interaction
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /storage
+  resources:
+    requests:
+      storage: 5Gi
+containerPorts:
+  http: 80
+extraEnvVarsSecret: env-all
+resources:
+  requests:
+    memory: "2G"
+    cpu: "1"
+  limits:
+    memory: "4G"
+    cpu: "2"
+autoscaling:
+  enabled: false
+
+service:
+  enabled: true
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "90.24.160.135"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+      more_set_headers "X-Frame-Options SAMEORIGIN";
+      more_set_headers "X-XSS-Protection 1";
+      more_set_headers "X-Content-Type-Options nosniff";
+      more_set_headers "Referrer-Policy no-referrer-when-downgrade";
+      more_set_headers "Content-Seckubectl create namespace argocdurity-Policy-Report-Only: default-src 'self' ged.test-kube.eukles.com; script-src 'strict-dynamic' ged.test-kube.eukles.com; img-src 'self' ged.test-kube.eukles.com; object-src 'none' ged.test-kube.eukles.com; style-src-elem 'unsafe-inline'; require-trusted-types-for 'script'";
+      gzip_vary "on";
+      gzip_proxied "any";
+      gzip_comp_level "6";
+      gzip_http_version "1.1";
+      gzip_types "*";
+      gzip_min_length "1400";
+  className: nginx
+  tls: true
+  hostname: ged.test-kube.eukles.com
+  enableFQDN: true
+  path: /
+  pathType: Prefix

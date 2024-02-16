@@ -1,0 +1,36 @@
+fullnameOverride: prd-ged-gedacc
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/app/web
+  tag: 23.10.7
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+persistence:
+  enabled: true
+  claimName: pvc-storage
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /storage
+  resources:
+    requests:
+      storage: 30Gi
+containerPorts:
+  http: 80
+extraEnvVarsSecret: env-all
+resources:
+  requests:
+    memory: "2G"
+    cpu: "1"
+  limits:
+    memory: "4G"
+    cpu: "2"
+autoscaling:
+  enabled: false
+
+service:
+  enabled: true
+  port: 80
+

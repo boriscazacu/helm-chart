@@ -1,0 +1,21 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "ged-app.fullname" . }}
+  labels:
+    {{- include "ged-app.labels" . | nindent 4 }}
+    release: kube-prometheus-stack
+    role: alert-rules
+spec:
+  groups:
+  - name: {{ include "ged-app.fullname" . }}
+    rules:
+    - alert: NoHealthyHosts - {{ include "ged-app.fullname" . }}
+      expr: sum(up{job="{{ include "ged-app.fullname" . }}"}) < 1 or absent(up{job="{{ include "ged-app.fullname" . }}"})
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: "No healthy hosts"
+{{- end }}

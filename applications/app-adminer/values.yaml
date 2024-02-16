@@ -1,0 +1,45 @@
+fullnameOverride: app-adminer
+image:
+  repositoryImage: adminer
+  tag: latest
+imagePullSecrets:
+  - name: regcred
+extraEnvVarsSecret: env-all
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+containerPorts:
+  http: 8080
+resources:
+  requests:
+    memory: "50M"
+    cpu: "10m"
+autoscaling:
+  enabled: false
+
+service:
+  enabled: true
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "90.24.160.135"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+      more_set_headers "X-Frame-Options SAMEORIGIN";
+      more_set_headers "X-XSS-Protection 1";
+      more_set_headers "X-Content-Type-Options nosniff";
+  tls: true
+  hostname: adminer.test-kube.eukles.com
+  path: /
+  pathType: Prefix
+

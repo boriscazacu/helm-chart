@@ -1,0 +1,36 @@
+fullnameOverride: prd-ged-laplacedigitale
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/app/web
+  tag: 24.01.0-rc10
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+persistence:
+  enabled: true
+  claimName: pvc-storage
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /storage
+  resources:
+    requests:
+      storage: 50Gi
+containerPorts:
+  http: 80
+extraEnvVarsSecret: env-all
+resources:
+  requests:
+    memory: "2G"
+    cpu: "1"
+  limits:
+    memory: "4G"
+    cpu: "2"
+autoscaling:
+  enabled: false
+
+service:
+  enabled: true
+  port: 80
+

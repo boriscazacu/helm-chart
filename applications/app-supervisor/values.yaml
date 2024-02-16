@@ -1,0 +1,33 @@
+fullnameOverride: ged-supervisor
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/app/supervisor
+  tag: 23.11.2.3
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+persistence:
+  enabled: true
+  existingClaim: pvc-storage
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /storage
+  resources:
+    requests:
+      storage: 5Gi
+containerPorts:
+  http: 80
+extraEnvVarsSecret: env-all
+resources:
+  requests:
+    memory: "500M"
+    cpu: "300m"
+  limits:
+    memory: "1G"
+    cpu: "1"
+autoscaling:
+  enabled: false
+
+

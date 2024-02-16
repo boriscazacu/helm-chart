@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ged-app-6
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: ged-app
+    repoURL: https://gitlab.eukles.com/eukles/infra/kubernetes-infra.git
+    targetRevision: helm-chart
+    helm:
+      valueFiles:
+        - helm-chart/ged-app/mysql/values.yaml
+        - helm-chart/ged-app/app-adminer/values.yaml
+        - helm-chart/ged-app/redis/values.yaml
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: recette

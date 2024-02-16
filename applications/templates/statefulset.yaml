@@ -1,0 +1,147 @@
+{{- if eq "StatefulSet" $.Values.kind }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ged-app.fullname" . }}
+  labels:
+    {{- include "ged-app.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ged-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ged-app.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ged-app.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "ged-app.fullname" . }}
+          image: "{{ .Values.image.repositoryImage }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- if .Values.image.command }}
+          command: {{ .Values.image.command | toString }}
+          {{- end}}
+          {{- if .Values.image.args }}
+          args: {{ .Values.image.args | toString }}
+          {{- end}}
+          env:
+          {{- range .Values.extraEnv }}
+          - {{- . | toYaml | nindent 12 -}}
+          {{- end }}
+
+          envFrom:
+            {{- if .Values.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ .Values.extraEnvVarsCM }}
+            {{- end }}
+            {{- if .Values.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ .Values.extraEnvVarsSecret }}
+            {{- end }}
+          ports:
+            {{- if .Values.containerPorts.http }}
+            - name: http
+              containerPort: {{ .Values.containerPorts.http }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.containerPorts.https }}
+            - name: https
+              containerPort: {{ .Values.containerPorts.https }}
+              protocol: TCP
+            {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+          {{- if .Values.persistence.configMap.enabled }}
+            - name: {{ include "ged-app.fullname" . }}-configmap
+              mountPath: {{ .Values.persistence.configMap.mountPath | quote }}
+          {{- end }}
+          {{- end }}
+
+      initContainers:
+      {{- $e := .Values.persistence.enabled -}}
+      {{- $mp := .Values.persistence.mountPath -}}
+      {{- range $k, $v := .Values.initContainers }}
+        - name: {{ $v.name }}
+          image: {{ $v.image }}:{{ $v.tag }}
+          {{- if and $e $v.persistenceEnabled }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ $mp }}
+          {{- end }}
+          command:
+          {{- range $v.command }}
+          - {{ . | nindent 12 -}}
+          {{- end }}
+
+          env:
+          {{- range $v.env }}
+          - {{- . | toYaml | nindent 12 -}}
+          {{- end }}
+
+          envFrom:
+            {{- if $v.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ $v.extraEnvVarsSecret }}
+            {{- end}}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "ged-app.pvcName" . }}
+      {{- if .Values.persistence.configMap.enabled }}
+        - name: {{ include "ged-app.fullname" . }}-configmap
+          configMap:
+            name: {{ include "ged-app.fullname" . }}-persistence-configmap
+      {{- end }}
+      {{- end }}
+{{- end }}

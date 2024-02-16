@@ -1,0 +1,63 @@
+fullnameOverride: ged-mysql
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/app/dev/mariadb
+  tag: 10.4
+imagePullSecrets:
+  - name: regcred
+replicaCount: 1
+extraEnvVarsSecret: env-all
+containerPorts:
+  http: 3306
+persistence:
+  enabled: true
+  claimName: pvc-mysql
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /var/lib/mysql
+  resources:
+    requests:
+      storage: 10Gi
+  backup:
+    enabled: true
+    claimName: pvc-backup
+    mountPath: /backup/
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+  configMap:
+    name: mysqld
+    mountPath: /etc/mysql/conf.d/
+resources:
+  requests:
+    memory: "2G"
+    cpu: "1"
+  limits:
+    memory: "4G"
+    cpu: "2"
+autoscaling:
+  enabled: false
+service:
+  enabled: true
+  clusterIP: None
+  port: 3306
+
+cronjob:
+  enabled: true
+  name: backup-mariadb
+  schedule: "0 5 * * *"
+  restartPolicy: Never
+  persistence:
+    mountPath: /backup/
+  image:
+    repositoryImage: schnitzler/mysqldump
+    tag: 3.18
+    extraEnvVarsSecret: env-all
+    command:
+      - sh
+      - -c
+      - |
+        find /backup/ -maxdepth 1 -mtime +7 -type f -delete
+        mysqldump -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST --single-transaction $MYSQL_DATABASE | gzip > /backup/$MYSQL_DATABASE-$(date +'%F-%H%M%S').sql.gz
+        mysqldump -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST --single-transaction mysql | gzip > /backup/mysql-$MYSQL_DATABASE-$(date +'%F-%H%M%S').sql.gz

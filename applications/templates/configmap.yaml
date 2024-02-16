@@ -1,0 +1,12 @@
+{{- if .Values.persistence.configMap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ged-app.fullname" . }}-persistence-configmap
+  labels:
+    {{- include "ged-app.labels" . | nindent 4 }}
+
+data:
+  {{ .Values.persistence.configMap.fileName | default "config.yaml" }}: |-
+{{ toYaml .Values.persistence.configMap.content | indent 4 }}
+{{- end }}

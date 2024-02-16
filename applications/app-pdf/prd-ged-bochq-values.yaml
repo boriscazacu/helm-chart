@@ -1,0 +1,25 @@
+fullnameOverride: prd-ged-bochq-pdf
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/services/pdf-server
+  tag: latest
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+containerPorts:
+  http: 80
+resources:
+  requests:
+    memory: "100M"
+    cpu: "10m"
+  limits:
+    memory: "1000M"
+    cpu: "1000m"
+autoscaling:
+  enabled: false
+service:
+  enabled: true
+  port: 80
+  clusterIP: None

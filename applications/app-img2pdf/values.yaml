@@ -1,0 +1,21 @@
+fullnameOverride: ged-img2pdf
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/services/img2pdf
+  tag: latest
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+resources:
+  requests:
+    memory: "100M"
+    cpu: "100m"
+  limits:
+    memory: "500M"
+    cpu: "200m"
+service:
+  enabled: true
+  port: 5000
+  clusterIP: None

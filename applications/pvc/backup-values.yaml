@@ -1,0 +1,15 @@
+fullnameOverride: pvc-backup
+kind: PersistentVolumeClaim
+
+persistence:
+  enabled: true
+  claimName: pvc-backup
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /usr/share/elasticsearch/data
+  resources:
+    requests:
+      storage: 5Gi
+
+
+

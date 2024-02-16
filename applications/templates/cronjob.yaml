@@ -1,0 +1,55 @@
+{{- if .Values.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.cronjob.name }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: {{ include "ged-app.fullname" . }}
+              image: "{{ .Values.cronjob.image.repositoryImage }}:{{ .Values.cronjob.image.tag | default .Chart.AppVersion }}"
+              {{- if .Values.cronjob.image.command }}
+              command: {{ .Values.cronjob.image.command | toString }}
+              {{- end}}
+              env:
+                {{- range  $key, $value :=  .Values.image.extraEnv }}
+                {{- if and ($key) ($value) }}
+                - name: {{ $key | quote }}
+                  value: {{ $value | quote }}
+                {{- end }}
+                {{- end }}
+              envFrom:
+                {{- if .Values.image.extraEnvVarsCM }}
+                - configMapRef:
+                    name: {{ .Values.image.extraEnvVarsCM }}
+                {{- end }}
+                {{- if .Values.image.extraEnvVarsSecret }}
+                - secretRef:
+                    name: {{ .Values.image.extraEnvVarsSecret }}
+                {{- end }}
+
+              volumeMounts:
+                - name: data
+                  mountPath: {{ .Values.cronjob.persistence.mountPath }}
+                {{- if .Values.persistence.configMap.enabled }}
+                - name: {{ include "ged-app.fullname" . }}-configmap
+                  mountPath: {{ .Values.persistence.configMap.mountPath | quote }}
+                {{- end }}
+
+          {{- if .Values.persistence.enabled }}
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: {{ include "ged-app.pvcName" . }}
+            {{- if .Values.persistence.configMap.enabled }}
+            - name: {{ include "ged-app.fullname" . }}-configmap
+              configMap:
+                name: {{ include "ged-app.fullname" . }}-persistence-configmap
+            {{- end }}
+           {{- end }}
+          restartPolicy: {{ .Values.cronjob.restartPolicy }}
+{{- end }}

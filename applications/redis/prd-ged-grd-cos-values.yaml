@@ -1,0 +1,26 @@
+fullnameOverride: prd-ged-grp-cos-redis
+image:
+  repositoryImage: redis
+  tag: alpine
+imagePullSecrets:
+  - name: regcred
+replicaCount: 1
+containerPorts:
+  http: 6379
+resources:
+  requests:
+    memory: "100M"
+    cpu: "100m"
+  limits:
+    memory: "500M"
+    cpu: "200m"
+autoscaling:
+  enabled: false
+strategy:
+  enabled: true
+  type: Recreate
+service:
+  enabled: true
+  clusterIP: None
+  port: 6379
+

@@ -1,0 +1,25 @@
+fullnameOverride: prd-ged-grp-cos-ocr
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/projects/apache-tika-server
+  tag: latest
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+containerPorts:
+  http: 9998
+resources:
+  requests:
+    memory: "100M"
+    cpu: "100m"
+  limits:
+    memory: "500M"
+    cpu: "200m"
+autoscaling:
+  enabled: false
+service:
+  enabled: true
+  port: 9998
+  clusterIP: None

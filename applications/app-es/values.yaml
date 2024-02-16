@@ -1,0 +1,67 @@
+fullnameOverride: app-es
+kind: StatefulSet
+image:
+  repositoryImage: docker.elastic.co/elasticsearch/elasticsearch
+  tag: 7.17.6
+
+securityContext:
+  privileged: true
+
+initContainers:
+  - name: fix-permissions
+    image: busybox
+    tag: latest
+    command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+    extraEnvVarsSecret: env-all
+    persistenceEnabled: true
+
+  - name: increase-vm-max-map
+    image: busybox
+    tag: latest
+    command: ["sysctl", "-w", "vm.max_map_count=262144"]
+
+  - name: increase-fd-ulimit
+    image: busybox
+    tag: latest
+    command: ["sh", "-c", "ulimit -n 65536"]
+
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+persistence:
+  enabled: true
+  existingClaim: pvc-backup
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /usr/share/elasticsearch/data
+  resources:
+    requests:
+      storage: 5Gi
+containerPorts:
+  http: 9200
+extraEnvVarsSecret: env-all
+extraEnv:
+  - name: discovery.seed_hosts
+    value: "es"
+  - name: node.name
+    value: "es"
+  - name: cluster.initial_master_nodes
+    value: "es"
+  - name: ES_JAVA_OPTS
+    value: "-Xms512m -Xmx512m"
+resources:
+  requests:
+    memory: "500M"
+    cpu: "300m"
+  limits:
+    memory: "2G"
+    cpu: "1"
+
+service:
+  enabled: true
+  port: 9998
+  clusterIP: None
+

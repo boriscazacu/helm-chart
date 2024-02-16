@@ -1,0 +1,28 @@
+fullnameOverride: app-email2pdf
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/services/email2pdf
+  tag: latest
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+extraEnv:
+  - name: WKHTMLTOPDF_HOST
+    value: html2pdf
+  - name: WKHTMLTOPDF_PORT
+    value: '80'
+resources:
+  requests:
+    memory: "100M"
+    cpu: "100m"
+  limits:
+    memory: "500M"
+    cpu: "200m"
+autoscaling:
+  enabled: false
+service:
+  enabled: true
+  port: 5000
+  clusterIP: None

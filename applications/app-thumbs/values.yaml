@@ -1,0 +1,25 @@
+fullnameOverride: ged-thumbs
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/ged/services/thumbs
+  tag: latest
+imagePullSecrets:
+  - name: regcred
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+containerPorts:
+  http: 8000
+resources:
+  requests:
+    memory: "100M"
+    cpu: "100m"
+  limits:
+    memory: "500M"
+    cpu: "200m"
+autoscaling:
+  enabled: false
+service:
+  enabled: true
+  port: 8000
+  clusterIP: None

@@ -1,0 +1,33 @@
+fullnameOverride: zabbix-agent
+image:
+  repositoryImage: gitlab.eukles.com:7344/eukles/infra/kubernetes-infra/zabbix-agent2
+  tag: alpine-6.0-latest
+imagePullSecrets:
+  - name: regcred
+extraEnvVarsSecret: env-all
+strategy:
+  enabled: true
+  type: Recreate
+replicaCount: 1
+resources:
+  requests:
+    memory: "50M"
+    cpu: "10m"
+autoscaling:
+  enabled: false
+
+persistence:
+  enabled: true
+  configMap:
+    name: zabbix-agent
+  accessModes:
+    - ReadWriteOnce
+  mountPath: /etc/zabbix/
+  resources:
+    requests:
+      storage: 1Gi
+
+service:
+  enabled: true
+  port: 80
+  clusterIP: None
